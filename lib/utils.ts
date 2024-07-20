@@ -99,7 +99,7 @@ interface GraphEdgeDataValue {
   target: string;
 }
 
-interface GraphRawNodeValue {
+export interface GraphRawNodeValue {
   title: string | null;
   slug: string;
   shortSummary?: string;
