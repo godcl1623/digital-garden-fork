@@ -225,7 +225,7 @@ export function convertObject(thisObject) {
   const newObject = {
     name: thisObject.name,
     children: children,
-    id: (_counter++).toString(),
+    id: thisObject.name,
     routePath: routerPath || null,
   };
 
