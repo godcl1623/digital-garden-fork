@@ -204,40 +204,67 @@ export function getAllSlugs() {
   return filePaths.map(f => toSlug(f));
 }
 
-export function getDirectoryData() {
-  const filteredDirectory = dirTree(Node.getMarkdownFolder(), { extensions: /\.md/ });
-  return convertObject(filteredDirectory);
+type EndsWith<T extends string, S extends string> = T extends `${infer Rest}${S}` ? T : never;
+
+type MarkdownFile = EndsWith<string, '.md'>;
+
+interface RawPostData {
+  path: string;
+  name: MarkdownFile;
 }
 
-let _counter = 0;
+interface RawDirectoryData {
+  path: string;
+  name: string;
+  children: (RawPostData | RawDirectoryData)[];
+}
 
-export function convertObject(thisObject) {
-  const children = [];
+export function getDirectoryData(): RawDirectoryData {
+  return dirTree(Node.getMarkdownFolder(), { extensions: /\.md/ });
+}
 
-  let routerPath =
-    getAllSlugs().find(slug => {
-      const fileName = Transformer.parseFileNameFromPath(toFilePath(slug));
-      return (
-        Transformer.normalizeFileName(fileName) === Transformer.normalizeFileName(thisObject.name)
-      );
-    }) || null;
-  routerPath = routerPath ? '/note/' + routerPath : null;
-  const newObject = {
-    name: thisObject.name,
-    children: children,
-    id: thisObject.name,
-    routePath: routerPath || null,
-  };
+interface BasicParsedData {
+  id: string;
+  name: string;
+}
 
-  if (thisObject.children != null && thisObject.children.length > 0) {
-    thisObject.children.forEach(aChild => {
-      const newChild = convertObject(aChild);
-      children.push(newChild);
-    });
-    return newObject;
+export interface ParsedPostData extends BasicParsedData {
+  routePath: string;
+}
+
+export interface ParsedPostDirectoryData extends BasicParsedData {
+  children: (ParsedPostData | ParsedPostDirectoryData)[];
+}
+
+export function convertObject(
+  directoryData: RawDirectoryData | RawPostData
+): ParsedPostData | ParsedPostDirectoryData {
+  if ('children' in directoryData) {
+    return parseToDirectoryData(directoryData);
   } else {
-    return newObject;
+    return parseToPostData(directoryData);
   }
+}
+
+function parseToDirectoryData(rawData: RawDirectoryData): ParsedPostDirectoryData {
+  return {
+    id: rawData.name,
+    name: rawData.name,
+    children: rawData.children.map(rawPost => convertObject(rawPost)),
+  };
+}
+
+function parseToPostData(rawData: RawPostData): ParsedPostData {
+  const routeFromFilePath = getAllSlugs().find(slug => {
+    const fileName = Transformer.parseFileNameFromPath(toFilePath(slug));
+    return Transformer.normalizeFileName(fileName) === Transformer.normalizeFileName(rawData.name);
+  });
+  const routePath = `/note/${routeFromFilePath}`;
+  return {
+    id: rawData.name,
+    name: rawData.name,
+    routePath,
+  };
 }
 
 function flat(array) {

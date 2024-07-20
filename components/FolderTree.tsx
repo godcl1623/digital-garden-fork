@@ -1,40 +1,30 @@
 import * as React from 'react';
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
+import { ParsedPostData, ParsedPostDirectoryData } from '../lib/utils';
 
 interface FolderTreeProps {
-  tree: unknown;
-  flattenNodes: unknown[];
+  tree: ParsedPostDirectoryData;
+  flattenNodes: (ParsedPostData | ParsedPostDirectoryData)[];
 }
 
-export default function FolderTree({ tree, flattenNodes }: FolderTreeProps) {
-  const renderTree = nodes => (
-    <TCTreeItem key={nodes.id} nodeId={nodes.id} label={nodes.name} itemId={nodes.id}>
-      {Array.isArray(nodes.children) ? nodes.children.map(node => renderTree(node)) : null}
+export default function FolderTree({ tree, flattenNodes }: Readonly<FolderTreeProps>) {
+  const router = useRouter();
+  const renderTree = (nodes: ParsedPostDirectoryData | ParsedPostData) => (
+    <TCTreeItem key={nodes.id} label={nodes.name} itemId={nodes.id}>
+      {'children' in nodes ? nodes.children.map(node => renderTree(node)) : null}
     </TCTreeItem>
   );
-
-  const router = useRouter();
-  // const childrenNodeIds = tree.children.map(aNode => {return aNode.id})
-  const expandedNodes = [tree.id];
   return (
     <SimpleTreeView
       aria-label='rich object'
-      //   defaultCollapseIcon={<ExpandMoreIcon />}
-      //   defaultExpanded={expandedNodes}
-      defaultExpandIcon={<ChevronRightIcon />}
-      onItemFocus={(event, nodIds) => {
-        const currentNode = flattenNodes.find(aNode => {
-          return aNode.id === nodIds;
+      onItemFocus={(event, selectedItemText) => {
+        const selectedPost = flattenNodes.find(aNode => {
+          return aNode.id === selectedItemText;
         });
-        // console.log(event)
-        // console.log(currentNode)
-        if (currentNode != null && currentNode.routePath != null) {
-          router.push(currentNode.routePath);
-          // router.reload()
+        if (selectedPost != null && 'routePath' in selectedPost && selectedPost.routePath != null) {
+          router.push(selectedPost.routePath);
         }
       }}
       sx={{ flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
