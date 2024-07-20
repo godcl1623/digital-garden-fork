@@ -10,7 +10,7 @@ import { Node } from './node';
 import rehypePrism from 'rehype-prism-plus';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
-import obsidianImage from './obsidian-image.js';
+import obsidianImage from './obsidian-image';
 import { getAllMarkdownFiles, toFilePath, toSlug } from './utils';
 
 export const Transformer = {
