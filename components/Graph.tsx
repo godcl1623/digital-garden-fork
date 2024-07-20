@@ -3,39 +3,16 @@ import { useRouter } from 'next/router';
 import CytoscapeComponent from 'react-cytoscapejs';
 import { LayoutOptions } from 'cytoscape';
 import dynamic from 'next/dynamic';
-
-interface CytoscapeGraphNodeDataValue {
-  id: string;
-  label: string;
-}
-
-interface CytoscapeGraphNodeData {
-  data: CytoscapeGraphNodeDataValue;
-}
-
-interface CytoscapeGraphEdgeDataValue {
-  id: string;
-  source: string;
-  target: string;
-}
-
-interface CytoscapeGraphEdgeData {
-  data: CytoscapeGraphEdgeDataValue;
-}
-
-interface CytoscapeGraphData {
-  nodes: CytoscapeGraphNodeData[];
-  edges: CytoscapeGraphEdgeData[];
-}
+import { GraphData } from '../lib/utils';
 
 interface GraphProps {
-  graph: CytoscapeGraphData;
+  graph: GraphData;
 }
 
 export default function Graph({ graph: { nodes, edges } }: Readonly<GraphProps>) {
   const [width, setWidth] = useState('300px');
   const [height, setHeight] = useState('300px');
-  const [graphData, setGraphData] = useState<CytoscapeGraphData>({
+  const [graphData, setGraphData] = useState<GraphData>({
     nodes,
     edges,
   });

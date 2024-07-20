@@ -18,6 +18,7 @@ const DynamicGraph = dynamic(
 )
 
 export default function Home({graphData, content, tree, flattenNodes, backLinks}) {
+    // console.log('graph: ', graphData)
     return (
         <Layout>
             <div className = 'container'>

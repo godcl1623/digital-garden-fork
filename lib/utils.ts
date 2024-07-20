@@ -93,17 +93,29 @@ export function toSlug(filePath) {
   }
 }
 
-export function constructGraphData() {
+interface GraphEdgeDataValue {
+  id?: string;
+  source: string;
+  target: string;
+}
+
+interface GraphRawNodeValue {
+  title: string | null;
+  slug: string;
+  shortSummary?: string;
+}
+
+export function constructGraphData(): { nodes: GraphRawNodeValue[]; edges: GraphEdgeDataValue[] } {
   const filepath = path.join(process.cwd(), 'graph-data.json');
+
   if (Node.isFile(filepath)) {
     const data = fs.readFileSync(filepath);
     return JSON.parse(String(data));
   } else {
     const filePaths = getAllMarkdownFiles();
-    const edges = [];
-    const nodes = [];
-    filePaths.forEach(aFilePath => {
-      // const {currentFilePath} = getFileNames(filename)
+    const edges: GraphEdgeDataValue[] = [];
+    const nodes: GraphRawNodeValue[] = [];
+    filePaths?.forEach(aFilePath => {
       const aNode = {
         title: Transformer.parseFileNameFromPath(aFilePath),
         slug: toSlug(aFilePath),
@@ -111,38 +123,52 @@ export function constructGraphData() {
       };
       nodes.push(aNode);
 
-      // console.log("Constructing graph for node: " + aFilePath )
       const internalLinks = Transformer.getInternalLinks(aFilePath);
       internalLinks.forEach(aLink => {
         if (aLink.slug === null || aLink.slug.length === 0) return;
-
         const anEdge = {
           source: toSlug(aFilePath),
           target: aLink.slug,
         };
         edges.push(anEdge);
-        // console.log("Source: " + anEdge.source)
-        // console.log("Target: " + anEdge.target)
       });
-      // console.log("==============Constructing graph" )
     });
+
     const data = { nodes, edges };
     fs.writeFileSync(filepath, JSON.stringify(data), 'utf-8');
     return data;
   }
 }
 
-export function getLocalGraphData(currentNodeId) {
+interface GraphNodeDataValue {
+  id: string;
+  label: string | null;
+}
+
+interface GraphNodeData {
+  data: GraphNodeDataValue;
+}
+
+interface GraphEdgeData {
+  data: GraphEdgeDataValue;
+}
+
+export interface GraphData {
+  nodes: GraphNodeData[];
+  edges: GraphEdgeData[];
+}
+
+export function getLocalGraphData(currentNodeId: string) {
   const { nodes, edges } = constructGraphData();
 
-  const newNodes = nodes.map(aNode => ({
+  const newNodes: GraphNodeData[] = nodes.map(aNode => ({
     data: {
       id: aNode.slug.toString(),
       label: Transformer.parseFileNameFromPath(toFilePath(aNode.slug)),
     },
   }));
 
-  const newEdges = edges.map(anEdge => ({
+  const newEdges: GraphEdgeData[] = edges.map(anEdge => ({
     data: {
       source: anEdge.source,
       target: anEdge.target,
@@ -175,10 +201,15 @@ export function getLocalGraphData(currentNodeId) {
       .filter(edge => localNodeIds.includes(edge.data.target));
 
     // Filter self-reference edges
-    localEdges = localEdges.filter(edge => edge.data.source !== edge.data.target);
+    localEdges = localEdges
+      .slice(localEdges.length)
+      .concat(localEdges.filter(edge => edge.data.source !== edge.data.target));
 
     // TODO: Find out why target ==='/' in some case
-    localEdges = localEdges.filter(edge => edge.data.target !== '/');
+    localEdges = localEdges
+      .slice(localEdges.length)
+      .concat(localEdges.filter(edge => edge.data.target !== '/'));
+
     return {
       nodes: localNodes,
       edges: localEdges,
