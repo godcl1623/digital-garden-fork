@@ -5,19 +5,12 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useRouter } from 'next/router';
 import { styled } from '@mui/material/styles';
 
-const TCTreeItem = styled(TreeItem)(({ theme }) => ({
-  '& .MuiTreeItem-content': {
-    '& .MuiTreeItem-label': {
-      fontSize: '1rem',
-      paddingLeft: '6px',
-      fontFamily:
-        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,',
-      lineHeight: 2.0,
-    },
-  },
-}));
+interface FolderTreeProps {
+  tree: unknown;
+  flattenNodes: unknown[];
+}
 
-export default function FolderTree(props) {
+export default function FolderTree({ tree, flattenNodes }: FolderTreeProps) {
   const renderTree = nodes => (
     <TCTreeItem key={nodes.id} nodeId={nodes.id} label={nodes.name} itemId={nodes.id}>
       {Array.isArray(nodes.children) ? nodes.children.map(node => renderTree(node)) : null}
@@ -25,16 +18,16 @@ export default function FolderTree(props) {
   );
 
   const router = useRouter();
-  // const childrenNodeIds = props.tree.children.map(aNode => {return aNode.id})
-  const expandedNodes = [props.tree.id];
+  // const childrenNodeIds = tree.children.map(aNode => {return aNode.id})
+  const expandedNodes = [tree.id];
   return (
     <SimpleTreeView
       aria-label='rich object'
-    //   defaultCollapseIcon={<ExpandMoreIcon />}
-    //   defaultExpanded={expandedNodes}
+      //   defaultCollapseIcon={<ExpandMoreIcon />}
+      //   defaultExpanded={expandedNodes}
       defaultExpandIcon={<ChevronRightIcon />}
       onItemFocus={(event, nodIds) => {
-        const currentNode = props.flattenNodes.find(aNode => {
+        const currentNode = flattenNodes.find(aNode => {
           return aNode.id === nodIds;
         });
         // console.log(event)
@@ -46,7 +39,19 @@ export default function FolderTree(props) {
       }}
       sx={{ flexGrow: 1, maxWidth: 400, overflowY: 'auto' }}
     >
-      {renderTree(props.tree)}
+      {renderTree(tree)}
     </SimpleTreeView>
   );
 }
+
+const TCTreeItem = styled(TreeItem)(({ theme }) => ({
+  '& .MuiTreeItem-content': {
+    '& .MuiTreeItem-label': {
+      fontSize: '1rem',
+      paddingLeft: '6px',
+      fontFamily:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,',
+      lineHeight: 2.0,
+    },
+  },
+}));
