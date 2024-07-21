@@ -1,20 +1,45 @@
 import Head from 'next/head';
 import Layout from '../../components/Layout';
-import { getAllSlugs, getSinglePost, constructGraphData, getLocalGraphData, getFlattenArray } from '../../lib/utils';
+import {
+  getAllSlugs,
+  getSinglePost,
+  constructGraphData,
+  getLocalGraphData,
+  getFlattenArray,
+  ParsedPostContent,
+  GraphRawNodeValue,
+  ParsedPostDirectoryData,
+  ParsedPostData,
+  GraphData,
+} from '../../lib/utils';
 import FolderTree from '../../components/FolderTree';
 import MDContent from '../../components/MDContent';
 import dynamic from 'next/dynamic';
 import { getTree } from '../../lib/postsCache';
+
+interface DetailPageProps {
+  note: ParsedPostContent;
+  backLinks: GraphRawNodeValue[];
+  tree: ParsedPostDirectoryData;
+  flattenNodes: (ParsedPostDirectoryData | ParsedPostData)[];
+  graphData: GraphData;
+}
 
 const DynamicGraph = dynamic(() => import('../../components/Graph'), {
   loading: () => <p>Loading ...</p>,
   ssr: false,
 });
 
-export default function Home({ note, backLinks, fileNames, tree, flattenNodes, graphData }) {
+export default function Detail({
+  note,
+  backLinks,
+  tree,
+  flattenNodes,
+  graphData,
+}: DetailPageProps) {
   return (
     <Layout>
-      <Head>{note.title && <meta name='title' content={note.title} />}</Head>
+      <Head>{note.id && <meta name='title' content={note.id} />}</Head>
       <div className='container'>
         <nav className='nav-bar'>
           <FolderTree tree={tree} flattenNodes={flattenNodes} />
@@ -38,7 +63,13 @@ export async function getStaticPaths() {
 
 const { nodes, edges } = constructGraphData();
 
-export function getStaticProps({ params }) {
+interface GetStaticPropsProps {
+  params: {
+    [key in string]: string;
+  };
+}
+
+export function getStaticProps({ params }: GetStaticPropsProps): { props: DetailPageProps } {
   const note = getSinglePost(params.id);
   const tree = getTree();
   const flattenNodes = getFlattenArray(tree);
@@ -47,15 +78,15 @@ export function getStaticProps({ params }) {
   const internalLinks = listOfEdges
     .map(anEdge => nodes.find(aNode => aNode.slug === anEdge.source))
     .filter(element => element !== undefined);
-  const backLinks = [...new Set(internalLinks)];
+  const backLinks = Array.from(new Set(internalLinks)).filter(link => link.slug !== params.id);
   const graphData = getLocalGraphData(params.id);
   return {
     props: {
       note,
-      tree: tree,
-      flattenNodes: flattenNodes,
-      backLinks: backLinks.filter(link => link.slug !== params.id),
-      graphData: graphData,
+      tree,
+      flattenNodes,
+      backLinks,
+      graphData,
     },
   };
 }

@@ -4,7 +4,7 @@ import AlertTitle from '@mui/material/AlertTitle';
 import { GraphRawNodeValue } from '../lib/utils';
 
 interface MDContentProps {
-  content: string;
+  content: string[];
   backLinks: GraphRawNodeValue[];
 }
 

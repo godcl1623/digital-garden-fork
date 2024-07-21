@@ -29,16 +29,19 @@ export function getAllMarkdownFiles() {
   return Node.getFiles(Node.getMarkdownFolder());
 }
 
-export function getSinglePost(slug) {
+export interface ParsedPostContent {
+  id: string;
+  data: string[];
+}
+
+export function getSinglePost(slug: string): ParsedPostContent {
   // List of filenames that will provide existing links to wikilink
-  let currentFilePath = toFilePath(slug);
-  //console.log("currentFilePath: ", currentFilePath)
+  const currentFilePath = toFilePath(slug);
+  const fileContent = Node.readFileSync(currentFilePath);
 
-  var fileContent = Node.readFileSync(currentFilePath);
-
-  const currentFileFrontMatter = Transformer.getFrontMatterData(fileContent);
+  // const currentFileFrontMatter = Transformer.getFrontMatterData(fileContent);
   // console.log("===============\n\nFile is scanning: ", slug)
-  const [htmlContent] = Transformer.getHtmlContent(fileContent);
+  const [htmlContent]: string[][] = Transformer.getHtmlContent(fileContent);
   // console.log("==================================")
   //console.log("hrmlcontents and backlinks")
   return {
@@ -48,10 +51,9 @@ export function getSinglePost(slug) {
   };
 }
 
-const cachedSlugMap = getSlugHashMap();
-
-export function toFilePath(slug) {
-  return cachedSlugMap[slug];
+export function toFilePath(slug: string) {
+  const cachedSlugMap = getSlugHashMap();
+  return cachedSlugMap.get(slug);
 }
 
 export function getSlugHashMap() {
@@ -61,8 +63,8 @@ export function getSlugHashMap() {
   // and not conflict-free, other solution was considered (hash file name into a hash, but this
   // is not SEO-friendly and make url look ugly ==> I chose this
 
-  const slugMap = new Map();
-  getAllMarkdownFiles().map(aFile => {
+  const slugMap: Map<string, string> = new Map();
+  getAllMarkdownFiles()?.map(aFile => {
     const aSlug = toSlug(aFile);
     // if (slugMap.has(aSlug)) {
     //     slugMap[aSlug].push(aFile)
@@ -70,11 +72,11 @@ export function getSlugHashMap() {
     //     slugMap[aSlug] = [aFile]
     // }
     // Note: [Future improvement] Resolve conflict
-    slugMap[aSlug] = aFile;
+    slugMap.set(aSlug, aFile);
   });
 
-  slugMap['index'] = Node.getMarkdownFolder() + '/index.md';
-  slugMap['/'] = Node.getMarkdownFolder() + '/index.md';
+  slugMap.set('index', Node.getMarkdownFolder() + '/index.md');
+  slugMap.set('/', Node.getMarkdownFolder() + '/index.md');
 
   return slugMap;
 }
