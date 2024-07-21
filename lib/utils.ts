@@ -5,6 +5,7 @@ import markdown from 'remark-parse';
 import { toString } from 'mdast-util-to-string';
 import path from 'path';
 import fs from 'fs';
+import { PATH_ESCAPE_TABLE } from '../const';
 
 const dirTree = require('directory-tree');
 
@@ -81,14 +82,14 @@ export function getSlugHashMap() {
   return slugMap;
 }
 
-export function toSlug(filePath) {
+export function toSlug(filePath: string) {
   if (Node.isFile(filePath) && filePath.includes(Node.getMarkdownFolder())) {
-    return filePath
-      .replace(Node.getMarkdownFolder(), '')
-      .replaceAll('/', '__')
-      .replaceAll(' ', '++++')
-      .replaceAll('&', 'ambersand')
-      .replace('.md', '');
+    let escapedFilePath = filePath.replace(Node.getMarkdownFolder(), '');
+    Object.entries(PATH_ESCAPE_TABLE).forEach(
+      ([escapeTarget, escapeString]) =>
+        (escapedFilePath = escapedFilePath.replaceAll(escapeTarget, escapeString))
+    );
+    return escapedFilePath.replace('.md', '');
   } else {
     //TODO handle this properly
     return '/';
@@ -178,7 +179,7 @@ export function getLocalGraphData(currentNodeId: string) {
   }));
 
   const existingNodeIDs = newNodes.map(aNode => aNode.data.id);
-  currentNodeId = currentNodeId === 'index' ? '__index' : currentNodeId;
+  currentNodeId = currentNodeId === 'index' ? '$2Findex' : currentNodeId;
   if (currentNodeId != null && existingNodeIDs.includes(currentNodeId)) {
     const outGoingNodeIds = newEdges
       .filter(anEdge => anEdge.data.source === currentNodeId)
