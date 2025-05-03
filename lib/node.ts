@@ -3,7 +3,7 @@ import fs from "fs"
 
 
 export const Node = {
-    isFile:function(filename){
+    isFile:function(filename: string){
         try {
             return fs.lstatSync(filename).isFile()
         } catch (err) {
@@ -12,28 +12,29 @@ export const Node = {
         }
 
     },
-    getFullPath:function(folderPath){
+    getFullPath:function(folderPath: string){
         return fs.readdirSync(folderPath).map(fn  => path.join(folderPath, fn))
     },
-    getFiles: function(dir) {
-        var results = [];
+    getFiles: function(dir: string) {
+        let results: string[] = [];
         if (fs != null && fs.readdirSync != null) {
-            var list = fs.readdirSync(dir);
-            list.forEach(function(file) {
-                file = dir + '/' + file;
-                var stat = fs.statSync(file);
+            const list = fs.readdirSync(dir);
+            list.forEach(function(fileName) {
+                fileName = dir + '/' + fileName;
+                const stat = fs.statSync(fileName);
                 if (stat && stat.isDirectory()) { 
                     /* Recurse into a subdirectory */
-                    results = results.concat(Node.getFiles(file));
+                    results = results.concat(Node.getFiles(fileName));
                 } else { 
                     /* Is a file */
-                    results.push(file);
+                    results.push(fileName);
                 }
             });
             return results.filter(f => f.endsWith(".md"))
         }
+        return results;
     },
-    readFileSync:function(fullPath){
+    readFileSync:function(fullPath: string){
         return fs.readFileSync(fullPath, "utf8")
     },
 

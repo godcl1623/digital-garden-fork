@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import CytoscapeComponent from 'react-cytoscapejs';
-import { LayoutOptions } from 'cytoscape';
 import dynamic from 'next/dynamic';
 import { GraphData } from '../lib/utils';
+import { Position } from "cytoscape";
 
 interface GraphProps {
   graph: GraphData;
@@ -69,7 +69,7 @@ export default function Graph({ graph: { nodes, edges } }: Readonly<GraphProps>)
   );
 }
 
-const layout: LayoutOptions = {
+const layout = {
   name: 'circle',
   fit: true, // whether to fit the viewport to the graph
   padding: 32, // the padding on fit
@@ -88,7 +88,7 @@ const layout: LayoutOptions = {
   //animateFilter: function ( node, i ){ return true; }, // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
   ready: undefined, // callback on layoutready
   stop: undefined, // callback on layoutstop
-  transform: function (node, position) {
+  transform: function (node: any, position: Position) {
     return position;
   }, // transform a given node position. Useful for changing flow direction in discrete layouts
 };

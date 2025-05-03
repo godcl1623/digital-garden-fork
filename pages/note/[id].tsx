@@ -18,7 +18,7 @@ import dynamic from 'next/dynamic';
 import { getTree } from '../../lib/postsCache';
 
 interface DetailPageProps {
-  note: ParsedPostContent;
+  note: ParsedPostContent | undefined;
   backLinks: GraphRawNodeValue[];
   tree: ParsedPostDirectoryData;
   flattenNodes: (ParsedPostDirectoryData | ParsedPostData)[];
@@ -39,12 +39,12 @@ export default function Detail({
 }: DetailPageProps) {
   return (
     <Layout>
-      <Head>{note.id && <meta name='title' content={note.id} />}</Head>
+      <Head>{note?.id && <meta name='title' content={note?.id} />}</Head>
       <div className='container'>
         <nav className='nav-bar'>
           <FolderTree tree={tree} flattenNodes={flattenNodes} />
         </nav>
-        <MDContent content={note.data} backLinks={backLinks} />
+        <MDContent content={note?.data ?? []} backLinks={backLinks} />
         <DynamicGraph graph={graphData} />
       </div>
     </Layout>

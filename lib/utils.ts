@@ -6,16 +6,15 @@ import { toString } from 'mdast-util-to-string';
 import path from 'path';
 import fs from 'fs';
 import { PATH_ESCAPE_TABLE } from '../const';
+import dirTree from 'directory-tree';
 
-const dirTree = require('directory-tree');
-
-export function getContent(slug) {
+export function getContent(slug: string) {
   let currentFilePath = toFilePath(slug);
   if (currentFilePath === undefined || currentFilePath == null) return null;
   return Node.readFileSync(currentFilePath);
 }
 
-export function getShortSummary(slug) {
+export function getShortSummary(slug: string) {
   const content = getContent(slug);
   if (content === undefined || content === null) {
     return;
@@ -27,7 +26,7 @@ export function getShortSummary(slug) {
 }
 
 export function getAllMarkdownFiles() {
-  return Node.getFiles(Node.getMarkdownFolder());
+  return Node.getFiles(Node.getMarkdownFolder()) ?? [];
 }
 
 export interface ParsedPostContent {
@@ -35,9 +34,11 @@ export interface ParsedPostContent {
   data: string[];
 }
 
-export function getSinglePost(slug: string): ParsedPostContent {
+export function getSinglePost(slug: string): ParsedPostContent | undefined {
   // List of filenames that will provide existing links to wikilink
   const currentFilePath = toFilePath(slug);
+  if (!currentFilePath) return;
+
   const fileContent = Node.readFileSync(currentFilePath);
 
   // const currentFileFrontMatter = Transformer.getFrontMatterData(fileContent);
@@ -167,7 +168,7 @@ export function getLocalGraphData(currentNodeId: string) {
   const newNodes: GraphNodeData[] = nodes.map(aNode => ({
     data: {
       id: aNode.slug.toString(),
-      label: Transformer.parseFileNameFromPath(toFilePath(aNode.slug)),
+      label: Transformer.parseFileNameFromPath(toFilePath(aNode.slug) ?? ""),
     },
   }));
 
@@ -240,17 +241,15 @@ export function getAllSlugs() {
 
 type EndsWith<T extends string, S extends string> = T extends `${infer Rest}${S}` ? T : never;
 
-type MarkdownFile = EndsWith<string, '.md'>;
-
 interface RawPostData {
   path: string;
-  name: MarkdownFile;
+  name: string;
 }
 
 interface RawDirectoryData {
   path: string;
   name: string;
-  children: (RawPostData | RawDirectoryData)[];
+  children?: dirTree.DirectoryTree[] | undefined;
 }
 
 export function getDirectoryData(): RawDirectoryData {
@@ -284,14 +283,14 @@ function parseToDirectoryData(rawData: RawDirectoryData): ParsedPostDirectoryDat
   return {
     id: rawData.name,
     name: rawData.name,
-    children: rawData.children.map(rawPost => convertObject(rawPost)),
+    children: rawData.children?.map(rawPost => convertObject(rawPost)) ?? [],
   };
 }
 
 function parseToPostData(rawData: RawPostData): ParsedPostData {
   const routeFromFilePath = getAllSlugs().find(slug => {
-    const fileName = Transformer.parseFileNameFromPath(toFilePath(slug));
-    return Transformer.normalizeFileName(fileName) === Transformer.normalizeFileName(rawData.name);
+    const fileName = Transformer.parseFileNameFromPath(toFilePath(slug) ?? "");
+    return Transformer.normalizeFileName(fileName ?? "") === Transformer.normalizeFileName(rawData.name);
   });
   const routePath = `/note/${routeFromFilePath}`;
   return {
@@ -301,17 +300,17 @@ function parseToPostData(rawData: RawPostData): ParsedPostData {
   };
 }
 
-function flat(array) {
-  var result = [];
-  array.forEach(function (a) {
-    result.push(a);
-    if (Array.isArray(a.children)) {
-      result = result.concat(flat(a.children));
+function flat(array: (ParsedPostData | ParsedPostDirectoryData)[]) {
+  let result: (ParsedPostData | ParsedPostDirectoryData)[] = [];
+  array.forEach(function (directoryData) {
+    result.push(directoryData);
+    if ("children" in directoryData && Array.isArray(directoryData.children)) {
+      result = result.concat(flat(directoryData.children));
     }
   });
   return result;
 }
 
-export function getFlattenArray(thisObject) {
+export function getFlattenArray(thisObject: ParsedPostDirectoryData): (ParsedPostData | ParsedPostDirectoryData)[] {
   return flat(thisObject.children);
 }

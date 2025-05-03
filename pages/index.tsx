@@ -17,7 +17,7 @@ import { getTree } from '../lib/postsCache';
 
 interface HomeProps {
   graphData: GraphData;
-  content: ParsedPostContent;
+  content: ParsedPostContent | undefined;
   tree: ParsedPostDirectoryData;
   flattenNodes: (ParsedPostDirectoryData | ParsedPostData)[];
   backLinks: GraphRawNodeValue[];
@@ -36,7 +36,7 @@ export default function Home({ graphData, content, tree, flattenNodes, backLinks
         <nav className='nav-bar'>
           <FolderTree tree={tree} flattenNodes={flattenNodes} />
         </nav>
-        <MDContent content={content.data} backLinks={backLinks} />
+        <MDContent content={content?.data ?? []} backLinks={backLinks} />
         <DynamicGraph graph={graphData} />
       </div>
     </Layout>
