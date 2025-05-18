@@ -1,12 +1,12 @@
-import { Node } from './node';
-import { Transformer } from './transformer';
-import { unified } from 'unified';
-import markdown from 'remark-parse';
-import { toString } from 'mdast-util-to-string';
-import path from 'path';
-import fs from 'fs';
-import { PATH_ESCAPE_TABLE } from '../const';
-import dirTree from 'directory-tree';
+import { Node } from "./node";
+import { Transformer } from "./transformer";
+import { unified } from "unified";
+import markdown from "remark-parse";
+import { toString } from "mdast-util-to-string";
+import path from "path";
+import fs from "fs";
+import { PATH_ESCAPE_TABLE } from "../const";
+import dirTree from "directory-tree";
 
 export function getContent(slug: string) {
   let currentFilePath = toFilePath(slug);
@@ -22,7 +22,7 @@ export function getShortSummary(slug: string) {
 
   const tree = unified().use(markdown).parse(content);
   let plainText = toString(tree);
-  return plainText.split(' ').splice(0, 40).join(' ');
+  return plainText.split(" ").splice(0, 40).join(" ");
 }
 
 export function getAllMarkdownFiles() {
@@ -77,23 +77,23 @@ export function getSlugHashMap() {
     slugMap.set(aSlug, aFile);
   });
 
-  slugMap.set('index', Node.getMarkdownFolder() + '/index.md');
-  slugMap.set('/', Node.getMarkdownFolder() + '/index.md');
+  slugMap.set("index", Node.getMarkdownFolder() + "/index.md");
+  slugMap.set("/", Node.getMarkdownFolder() + "/index.md");
 
   return slugMap;
 }
 
 export function toSlug(filePath: string) {
   if (Node.isFile(filePath) && filePath.includes(Node.getMarkdownFolder())) {
-    let escapedFilePath = filePath.replace(Node.getMarkdownFolder(), '');
+    let escapedFilePath = filePath.replace(Node.getMarkdownFolder(), "");
     Object.entries(PATH_ESCAPE_TABLE).forEach(
       ([escapeTarget, escapeString]) =>
-        (escapedFilePath = escapedFilePath.replaceAll(escapeTarget, escapeString))
+        (escapedFilePath = escapedFilePath.replaceAll(escapeTarget, escapeString)),
     );
-    return escapedFilePath.replace('.md', '');
+    return escapedFilePath.replace(".md", "");
   } else {
     //TODO handle this properly
-    return '/';
+    return "/";
   }
 }
 
@@ -110,7 +110,7 @@ export interface GraphRawNodeValue {
 }
 
 export function constructGraphData(): { nodes: GraphRawNodeValue[]; edges: GraphEdgeDataValue[] } {
-  const filepath = path.join(process.cwd(), 'graph-data.json');
+  const filepath = path.join(process.cwd(), "graph-data.json");
 
   if (Node.isFile(filepath)) {
     const data = fs.readFileSync(filepath);
@@ -139,7 +139,7 @@ export function constructGraphData(): { nodes: GraphRawNodeValue[]; edges: Graph
     });
 
     const data = { nodes, edges };
-    fs.writeFileSync(filepath, JSON.stringify(data), 'utf-8');
+    fs.writeFileSync(filepath, JSON.stringify(data), "utf-8");
     return data;
   }
 }
@@ -180,7 +180,7 @@ export function getLocalGraphData(currentNodeId: string) {
   }));
 
   const existingNodeIDs = newNodes.map(aNode => aNode.data.id);
-  currentNodeId = currentNodeId === 'index' ? '$2Findex' : currentNodeId;
+  currentNodeId = currentNodeId === "index" ? "$2Findex" : currentNodeId;
   if (currentNodeId != null && existingNodeIDs.includes(currentNodeId)) {
     const outGoingNodeIds = newEdges
       .filter(anEdge => anEdge.data.source === currentNodeId)
@@ -193,7 +193,7 @@ export function getLocalGraphData(currentNodeId: string) {
     outGoingNodeIds.push(currentNodeId);
 
     const localNodeIds = incomingNodeIds.concat(
-      outGoingNodeIds.filter(item => incomingNodeIds.indexOf(item) < 0)
+      outGoingNodeIds.filter(item => incomingNodeIds.indexOf(item) < 0),
     );
     if (localNodeIds.indexOf(currentNodeId) < 0) {
       localNodeIds.push(currentNodeId);
@@ -212,7 +212,7 @@ export function getLocalGraphData(currentNodeId: string) {
     // TODO: Find out why target ==='/' in some case
     localEdges = localEdges
       .slice(localEdges.length)
-      .concat(localEdges.filter(edge => edge.data.target !== '/'));
+      .concat(localEdges.filter(edge => edge.data.target !== "/"));
 
     return {
       nodes: localNodes,
@@ -234,7 +234,7 @@ export function getAllSlugs() {
   //console.log("\n\nAll Posts are scanning")
   // Get file names under /posts
   const filePaths = Node.getFiles(Node.getMarkdownFolder()).filter(
-    f => !(f.endsWith('index') || f.endsWith('sidebar'))
+    f => !(f.endsWith("index") || f.endsWith("sidebar")),
   );
   return filePaths.map(f => toSlug(f));
 }
@@ -270,9 +270,9 @@ export interface ParsedPostDirectoryData extends BasicParsedData {
 }
 
 export function convertObject(
-  directoryData: RawDirectoryData | RawPostData
+  directoryData: RawDirectoryData | RawPostData,
 ): ParsedPostData | ParsedPostDirectoryData {
-  if ('children' in directoryData) {
+  if ("children" in directoryData) {
     return parseToDirectoryData(directoryData);
   } else {
     return parseToPostData(directoryData);
@@ -302,7 +302,7 @@ function parseToPostData(rawData: RawPostData): ParsedPostData {
 
 function flat(array: (ParsedPostData | ParsedPostDirectoryData)[]) {
   let result: (ParsedPostData | ParsedPostDirectoryData)[] = [];
-  array.forEach(function (directoryData) {
+  array.forEach(function(directoryData) {
     result.push(directoryData);
     if ("children" in directoryData && Array.isArray(directoryData.children)) {
       result = result.concat(flat(directoryData.children));

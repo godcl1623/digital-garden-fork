@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import CytoscapeComponent from 'react-cytoscapejs';
-import dynamic from 'next/dynamic';
-import { GraphData } from '../lib/utils';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import CytoscapeComponent from "react-cytoscapejs";
+import dynamic from "next/dynamic";
+import { GraphData } from "../../lib/utils";
 import { Position } from "cytoscape";
 
 interface GraphProps {
   graph: GraphData;
 }
 
+const DynamicCytoscapeComponent = dynamic(() => import("react-cytoscapejs"));
+
 export default function Graph({ graph: { nodes, edges } }: Readonly<GraphProps>) {
-  const [width, setWidth] = useState('300px');
-  const [height, setHeight] = useState('300px');
+  const [width, setWidth] = useState("300px");
+  const [height, setHeight] = useState("300px");
   const [graphData, setGraphData] = useState<GraphData>({
     nodes,
     edges,
@@ -30,16 +32,14 @@ export default function Graph({ graph: { nodes, edges } }: Readonly<GraphProps>)
     }));
   }, [nodes, edges]);
 
-  const DynamicCytoscapeComponent = dynamic(() => import('react-cytoscapejs'));
-
   return (
-    <div className='right-bar-container'>
+    <div className="right-bar-container">
       <h3>Interactive Graph</h3>
       <div
         style={{
-          border: '1px solid #ddd',
-          backgroundColor: '#f5f6fe',
-          borderRadius: '8px',
+          border: "1px solid #ddd",
+          backgroundColor: "#f5f6fe",
+          borderRadius: "8px",
         }}
       >
         <DynamicCytoscapeComponent
@@ -54,11 +54,11 @@ export default function Graph({ graph: { nodes, edges } }: Readonly<GraphProps>)
           layout={layout}
           stylesheet={styleSheet}
           cy={cy => {
-            cy.on('tap', 'node', evt => {
+            cy.on("tap", "node", evt => {
               const node = evt.target;
               const nodeData = node.data();
-              if (typeof nodeData.id === 'string') {
-                const path = '/note/' + node.data().id;
+              if (typeof nodeData.id === "string") {
+                const path = "/note/" + node.data().id;
                 router.push(path);
               }
             });
@@ -70,7 +70,7 @@ export default function Graph({ graph: { nodes, edges } }: Readonly<GraphProps>)
 }
 
 const layout = {
-  name: 'circle',
+  name: "circle",
   fit: true, // whether to fit the viewport to the graph
   padding: 32, // the padding on fit
   boundingBox: undefined, // constrain layout bounds; { x1, y1, x2, y2 } or { x1, y1, w, h }
@@ -88,35 +88,35 @@ const layout = {
   //animateFilter: function ( node, i ){ return true; }, // a function that determines whether the node should be animated.  All nodes animated by default on animate enabled.  Non-animated nodes are positioned immediately when the layout starts
   ready: undefined, // callback on layoutready
   stop: undefined, // callback on layoutstop
-  transform: function (node: any, position: Position) {
+  transform: function(node: any, position: Position) {
     return position;
   }, // transform a given node position. Useful for changing flow direction in discrete layouts
 };
 
 const styleSheet = [
   {
-    selector: 'node',
+    selector: "node",
     style: {
-      'background-color': '#666',
-      'font-size': '12px',
-      width: '20px',
-      height: '20px',
-      label: 'data(label)',
+      "background-color": "#666",
+      "font-size": "12px",
+      width: "20px",
+      height: "20px",
+      label: "data(label)",
     },
   },
   {
-    selector: 'label',
-    style: { 'font-size': '12px' },
+    selector: "label",
+    style: { "font-size": "12px" },
   },
   {
-    selector: 'edge',
+    selector: "edge",
     style: {
       width: 2,
       height: 200,
-      'line-color': '#b2b2b2',
-      'target-arrow-color': '#ccc',
+      "line-color": "#b2b2b2",
+      "target-arrow-color": "#ccc",
       // 'target-arrow-shape': 'triangle',
-      'curve-style': 'straight',
+      "curve-style": "straight",
     },
   },
 ];
