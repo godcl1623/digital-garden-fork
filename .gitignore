@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 .env*
+*_test
 
 # debug
 npm-debug.log*
