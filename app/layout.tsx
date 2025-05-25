@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={openSans.className}>
     <body>
-    <PlausibleProvider domain={"mindstone.tuancao.me"}>
+    <PlausibleProvider domain={""}>
       <main className={"theme-light"}>
         {children}
       </main>

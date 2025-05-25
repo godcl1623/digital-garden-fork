@@ -204,7 +204,7 @@ export async function getLocalGraphData(currentNodeId: string) {
   }));
 
   const existingNodeIDs = newNodes.map(aNode => aNode.data.id);
-  currentNodeId = currentNodeId === "index" ? "$2Findex" : currentNodeId;
+  currentNodeId = !currentNodeId.startsWith("$2F") ? `$2F${currentNodeId}` : currentNodeId;
   if (currentNodeId != null && existingNodeIDs.includes(currentNodeId)) {
     const outGoingNodeIds = newEdges
       .filter(anEdge => anEdge.data.source === currentNodeId)

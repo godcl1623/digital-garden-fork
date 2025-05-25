@@ -2,7 +2,7 @@ import { getPageData, type ParsedPostDirectoryData } from "../lib/utils";
 import PageView from "./_components/PageView";
 
 export default async function Home() {
-  const pageData = await getPageData();
+  const pageData = await getPageData("README");
 
   return (
     <PageView tree={pageData.tree as ParsedPostDirectoryData} flattenNodes={pageData.flattenNodes}

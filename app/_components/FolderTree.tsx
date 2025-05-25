@@ -18,6 +18,7 @@ export default function FolderTree({ tree, flattenNodes }: Readonly<FolderTreePr
       {"children" in nodes ? nodes.children.map(node => renderTree(node)) : null}
     </TCTreeItem>
   );
+  
   return (
     <SimpleTreeView
       aria-label="rich object"
@@ -30,6 +31,7 @@ export default function FolderTree({ tree, flattenNodes }: Readonly<FolderTreePr
         }
       }}
       sx={{ flexGrow: 1, maxWidth: 400, overflowY: "auto" }}
+      defaultExpandedItems={["posts"]}
     >
       {renderTree(tree)}
     </SimpleTreeView>
