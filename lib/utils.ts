@@ -8,6 +8,8 @@ import fs from "fs";
 import { PATH_ESCAPE_TABLE } from "../const";
 import dirTree from "directory-tree";
 
+const utilsCache: Record<string, any> = {};
+
 export function getContent(slug: string) {
   let currentFilePath = toFilePath(slug);
   if (currentFilePath === undefined || currentFilePath == null) return null;
@@ -26,7 +28,10 @@ export function getShortSummary(slug: string) {
 }
 
 export function getAllMarkdownFiles() {
-  return Node.getFiles(Node.getMarkdownFolder()) ?? [];
+  if (!("allFiles" in utilsCache)) {
+    utilsCache.allFiles = Node.getFiles(Node.getMarkdownFolder()) ?? [];
+  }
+  return utilsCache.allFiles;
 }
 
 export interface ParsedPostContent {
@@ -54,8 +59,10 @@ export function getSinglePost(slug: string): ParsedPostContent | undefined {
 }
 
 export function toFilePath(slug: string) {
-  const cachedSlugMap = getSlugHashMap();
-  return cachedSlugMap.get(slug);
+  if (!("slugMap" in utilsCache)) {
+    utilsCache.slugMap = getSlugHashMap();
+  }
+  return utilsCache.slugMap.get(slug) ?? utilsCache.slugMap.entries().find(([key]) => key.includes(slug))?.[1];
 }
 
 export function getSlugHashMap() {
@@ -109,34 +116,50 @@ export interface GraphRawNodeValue {
   shortSummary?: string;
 }
 
-export function constructGraphData(): { nodes: GraphRawNodeValue[]; edges: GraphEdgeDataValue[] } {
+export async function constructGraphData(): Promise<{
+  nodes: GraphRawNodeValue[];
+  edges: GraphEdgeDataValue[]
+} | undefined> {
   const filepath = path.join(process.cwd(), "graph-data.json");
 
   if (Node.isFile(filepath)) {
     const data = fs.readFileSync(filepath);
     return JSON.parse(String(data));
   } else {
+    console.log("start constructing graph data");
     const filePaths = getAllMarkdownFiles();
+    const batchSize = 50;
+    const batches = [];
+
+    for (let i = 0; i < filePaths.length; i += batchSize) {
+      batches.push(filePaths.slice(i, i + batchSize));
+    }
+    console.log("Total batches: ", batches.length);
+
     const edges: GraphEdgeDataValue[] = [];
     const nodes: GraphRawNodeValue[] = [];
-    filePaths?.forEach(aFilePath => {
-      const aNode = {
-        title: Transformer.parseFileNameFromPath(aFilePath),
-        slug: toSlug(aFilePath),
-        shortSummary: getShortSummary(toSlug(aFilePath)),
-      };
-      nodes.push(aNode);
 
-      const internalLinks = Transformer.getInternalLinks(aFilePath);
-      internalLinks.forEach(aLink => {
-        if (aLink.slug === null || aLink.slug.length === 0) return;
-        const anEdge = {
-          source: toSlug(aFilePath),
-          target: aLink.slug,
+    await Promise.all(batches.map(async (batch, index) => {
+      console.log("Batch: ", index);
+      batch?.forEach((filePath) => {
+        const aNode = {
+          title: Transformer.parseFileNameFromPath(filePath),
+          slug: toSlug(filePath),
+          shortSummary: getShortSummary(toSlug(filePath)),
         };
-        edges.push(anEdge);
+        nodes.push(aNode);
+
+        const internalLinks = Transformer.getInternalLinks(filePath);
+        internalLinks.forEach((aLink) => {
+          if (aLink.slug === null || aLink.slug.length === 0) return;
+          const anEdge = {
+            source: toSlug(filePath),
+            target: aLink.slug,
+          };
+          edges.push(anEdge);
+        });
       });
-    });
+    }));
 
     const data = { nodes, edges };
     fs.writeFileSync(filepath, JSON.stringify(data), "utf-8");
@@ -162,17 +185,17 @@ export interface GraphData {
   edges: GraphEdgeData[];
 }
 
-export function getLocalGraphData(currentNodeId: string) {
-  const { nodes, edges } = constructGraphData();
+export async function getLocalGraphData(currentNodeId: string) {
+  const { nodes, edges } = await constructGraphData();
 
-  const newNodes: GraphNodeData[] = nodes.map(aNode => ({
+  const newNodes: GraphNodeData[] = nodes?.map(aNode => ({
     data: {
       id: aNode.slug.toString(),
-      label: Transformer.parseFileNameFromPath(toFilePath(aNode.slug) ?? ""),
+      label: Transformer.parseFileNameFromPath(toFilePath(aNode.slug) ?? "") ?? "",
     },
   }));
 
-  const newEdges: GraphEdgeData[] = edges.map(anEdge => ({
+  const newEdges: GraphEdgeData[] = edges?.map(anEdge => ({
     data: {
       source: anEdge.source,
       target: anEdge.target,
@@ -219,13 +242,17 @@ export function getLocalGraphData(currentNodeId: string) {
       edges: localEdges,
     };
   } else {
-    const filteredEdges = newEdges
-      .filter(edge => existingNodeIDs.includes(edge.data.source))
-      .filter(edge => existingNodeIDs.includes(edge.data.target));
+    // const filteredEdges = newEdges
+    //   .filter(edge => existingNodeIDs.includes(edge.data.source))
+    //   .filter(edge => existingNodeIDs.includes(edge.data.target));
 
+    // return {
+    //   nodes: newNodes,
+    //   edges: filteredEdges,
+    // };
     return {
-      nodes: newNodes,
-      edges: filteredEdges,
+      nodes: [],
+      edges: [],
     };
   }
 }
@@ -233,7 +260,7 @@ export function getLocalGraphData(currentNodeId: string) {
 export function getAllSlugs() {
   //console.log("\n\nAll Posts are scanning")
   // Get file names under /posts
-  const filePaths = Node.getFiles(Node.getMarkdownFolder()).filter(
+  const filePaths = getAllMarkdownFiles().filter(
     f => !(f.endsWith("index") || f.endsWith("sidebar")),
   );
   return filePaths.map(f => toSlug(f));

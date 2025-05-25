@@ -3,11 +3,8 @@ import { convertObject, getDirectoryData, ParsedPostData, ParsedPostDirectoryDat
 const cache: { tree?: ParsedPostData | ParsedPostDirectoryData | null } = {};
 
 export const getTree = () => {
-  const tree = cache.tree != null ? cache.tree : convertObject(getDirectoryData());
   if (cache.tree == null) {
-    cache.tree = tree;
-    return tree;
+    cache.tree = convertObject(getDirectoryData());
   }
   return cache.tree;
-
 };

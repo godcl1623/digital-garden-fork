@@ -3,7 +3,7 @@ import {
   getFlattenArray,
   getLocalGraphData,
   getSinglePost,
-  ParsedPostDirectoryData,
+  type ParsedPostDirectoryData,
 } from "../lib/utils";
 import { getTree } from "../lib/postsCache";
 import PageView from "./_components/PageView";
@@ -19,7 +19,7 @@ export default async function Home() {
 }
 
 async function getPageData() {
-  const { nodes, edges } = constructGraphData();
+  const { nodes, edges } = await constructGraphData();
   const tree = getTree();
   const content = getSinglePost("index");
   const flattenNodes = getFlattenArray(tree as ParsedPostDirectoryData);
@@ -28,7 +28,7 @@ async function getPageData() {
     .map(anEdge => nodes.find(aNode => aNode.slug === anEdge.source))
     .filter(element => element !== undefined);
   const backLinks = Array.from(new Set(internalLinks));
-  const graphData = getLocalGraphData("index");
+  const graphData = await getLocalGraphData("index");
 
   return {
     content,
