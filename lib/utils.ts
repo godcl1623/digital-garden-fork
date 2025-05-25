@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 import { PATH_ESCAPE_TABLE } from "../const";
 import dirTree from "directory-tree";
+import { getTree } from "./postsCache";
 
 const utilsCache: Record<string, any> = {};
 
@@ -340,4 +341,25 @@ function flat(array: (ParsedPostData | ParsedPostDirectoryData)[]) {
 
 export function getFlattenArray(thisObject: ParsedPostDirectoryData): (ParsedPostData | ParsedPostDirectoryData)[] {
   return flat(thisObject.children);
+}
+
+export async function getPageData(postId: string = "index") {
+  const { nodes, edges } = await constructGraphData();
+  const tree = getTree();
+  const content = getSinglePost(postId);
+  const flattenNodes = getFlattenArray(tree as ParsedPostDirectoryData);
+  const listOfEdges = edges.filter(anEdge => anEdge.target === postId);
+  const internalLinks = listOfEdges
+    .map(anEdge => nodes.find(aNode => aNode.slug === anEdge.source))
+    .filter(element => element !== undefined);
+  const backLinks = Array.from(new Set(internalLinks)).filter((link) => link?.slug !== postId);
+  const graphData = await getLocalGraphData(postId);
+
+  return {
+    content,
+    tree,
+    flattenNodes,
+    graphData,
+    backLinks,
+  };
 }
