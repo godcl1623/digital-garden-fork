@@ -30,9 +30,9 @@ export function getShortSummary(slug: string) {
 
 export function getAllMarkdownFiles() {
   if (!("allFiles" in utilsCache)) {
-    utilsCache.allFiles = Node.getFiles(Node.getMarkdownFolder()) ?? [];
+    utilsCache.allFiles = Node.getFiles(Node.getMarkdownFolder()) ?? [] as string[];
   }
-  return utilsCache.allFiles;
+  return utilsCache.allFiles as string[];
 }
 
 export interface ParsedPostContent {
@@ -63,7 +63,7 @@ export function toFilePath(slug: string) {
   if (!("slugMap" in utilsCache)) {
     utilsCache.slugMap = getSlugHashMap();
   }
-  return utilsCache.slugMap.get(slug) ?? utilsCache.slugMap.entries().find(([key]) => key.includes(slug))?.[1];
+  return utilsCache.slugMap.get(slug) ?? utilsCache.slugMap.entries().find(([key]: [string, string]) => key.includes(slug))?.[1];
 }
 
 export function getSlugHashMap() {
@@ -120,7 +120,7 @@ export interface GraphRawNodeValue {
 export async function constructGraphData(): Promise<{
   nodes: GraphRawNodeValue[];
   edges: GraphEdgeDataValue[]
-} | undefined> {
+}> {
   const filepath = path.join(process.cwd(), "graph-data.json");
 
   if (Node.isFile(filepath)) {
@@ -130,7 +130,7 @@ export async function constructGraphData(): Promise<{
     console.log("start constructing graph data");
     const filePaths = getAllMarkdownFiles();
     const batchSize = 50;
-    const batches = [];
+    const batches: string[][] = [];
 
     for (let i = 0; i < filePaths.length; i += batchSize) {
       batches.push(filePaths.slice(i, i + batchSize));
