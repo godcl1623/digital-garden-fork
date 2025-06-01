@@ -17,7 +17,7 @@ export default function MDContent({ content, backLinks }: Readonly<MDContentProp
   //   }
 
   return (
-    <div className="markdown-rendered">
+    <div className="markdown-rendered" style={{ display: "flex", flexDirection: "column" }}>
       <Alert severity="info">
         <AlertTitle>Want to know more?</AlertTitle>
         🌱 <strong>Follow</strong> or <strong>DM</strong> me on Twitter at{" "}
@@ -25,7 +25,7 @@ export default function MDContent({ content, backLinks }: Readonly<MDContentProp
           <a href="https://twitter.com/tuancm">@tuancm</a>
         </span>
       </Alert>
-      <div dangerouslySetInnerHTML={{ __html: content }}/>
+      <div dangerouslySetInnerHTML={{ __html: content }} style={{ flex: "1" }}/>
       {/*<button onClick={handleInternalLinkClick}>Click me</button>*/}
       {/*<hr/>*/}
       <div>

@@ -21,7 +21,7 @@ interface RootViewProps {
 
 export default function PageView({ graphData, content, tree, flattenNodes, backLinks }: RootViewProps) {
   return (
-    <div className="container">
+    <div className="container" style={{ minHeight: "100vh" }}>
       <nav className="nav-bar">
         <FolderTree tree={tree} flattenNodes={flattenNodes}/>
       </nav>
