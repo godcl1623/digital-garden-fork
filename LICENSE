@@ -19,3 +19,20 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Fork Modifications
+
+This fork contains modifications and improvements made by [godcl1623] since [02/16/2023].
+These modifications are also released under the MIT License.
+
+Modifications include but are not limited to:
+- Build speed improvements
+- Refactorings
+    - enabled TypeScript
+- Bug fixes
+    - Interactive Graph not updated on page navigation
+- Please refer to commits for more changes.
+
+For a complete list of changes, please refer to the commit history.

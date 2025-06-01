@@ -1,9 +1,37 @@
-import {visit} from "unist-util-visit";
+import { visit } from "unist-util-visit";
+import { VFile } from "vfile-reporter/lib";
+
+export interface Position {
+    start: {
+        line: number;
+        column: number;
+        offset: number;
+    };
+    end: {
+        line: number;
+        column: number;
+        offset: number;
+    }
+}
+
+interface Tree {
+    type: string;
+    depth?: number;
+    children: Tree[];
+    position: Position;
+}
+
+export interface Node {
+    type: string;
+    value: string;
+    position: Position;
+    children?: unknown;
+}
 
 const regex = /\!\[\[(([a-z\-_0-9\\/\:]+\s*)+\.(jpg|jpeg|png|gif|svg|webp))]]/gi;
 const regex2 = /\!\[\[(([a-z\-_0-9\\/\:]+\s*)+\.(jpg|jpeg|png|gif|svg|webp))]]/gi; //TODO why can't I reuse regex literal???
 
-function convertTextNode(node) {
+function convertTextNode(node: Node) {
     const searchText = node.value;
 
     /*
@@ -73,9 +101,9 @@ function convertTextNode(node) {
     };
 }
 
-export default function attacher(options) {
-    return function transformer(tree, vfile) {
-        visit(tree, "text", (node) => {
+export default function attacher(options?: unknown) {
+    return function transformer(tree: Tree, vfile: VFile) {
+        visit(tree, "text", (node: Node) => {
             if (regex2.test(node.value)) {
                 const newNode = convertTextNode(node);
                 node.type = "paragraph";
@@ -84,7 +112,7 @@ export default function attacher(options) {
         });
 
         // Change back "text-temp" node ==> "text" to clean up
-        visit(tree, "text-temp", (node) => {
+        visit(tree, "text-temp", (node: Node) => {
             node.type = "text";
         });
 
