@@ -2,6 +2,7 @@ import React from "react";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import { GraphRawNodeValue } from "../../lib/utils";
+import Link from "next/link";
 
 interface MDContentProps {
   content: string[];
@@ -19,11 +20,19 @@ export default function MDContent({ content, backLinks }: Readonly<MDContentProp
   return (
     <div className="markdown-rendered" style={{ display: "flex", flexDirection: "column" }}>
       <Alert severity="info">
-        <AlertTitle>Want to know more?</AlertTitle>
-        🌱 <strong>Follow</strong> or <strong>DM</strong> me on Twitter at{" "}
-        <span>
-          <a href="https://twitter.com/tuancm">@tuancm</a>
-        </span>
+        <AlertTitle>Note</AlertTitle>
+        This project is a fork of the original{" "}
+        <Link href={"https://github.com/TuanManhCao/digital-garden"}>
+          <strong>MindStone</strong>
+        </Link> project by{" "}
+        <Link href={"https://github.com/TuanManhCao"}>
+          <strong>Tuan Cao</strong>
+        </Link>.
+        <br/>
+        If you have any feedback, please feel free to contact me on{" "}
+        <Link href={"mailto:godcl1623@gmail.com"}>
+          <strong>email</strong>
+        </Link>
       </Alert>
       <div dangerouslySetInnerHTML={{ __html: content }} style={{ flex: "1" }}/>
       {/*<button onClick={handleInternalLinkClick}>Click me</button>*/}
