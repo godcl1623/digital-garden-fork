@@ -2,7 +2,7 @@ import { convertObject, getDirectoryData, ParsedPostData, ParsedPostDirectoryDat
 
 const cache: { tree?: ParsedPostData | ParsedPostDirectoryData | null } = {};
 
-export const getTree = () => {
+export const getTree = async () => {
   if (cache.tree == null) {
     cache.tree = convertObject(getDirectoryData());
   }
