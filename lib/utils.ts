@@ -6,8 +6,8 @@ import { toString } from "mdast-util-to-string";
 import path from "path";
 import fs from "fs";
 import { PATH_ESCAPE_TABLE } from "../const";
-import dirTree from "directory-tree";
 import { getTree } from "./postsCache";
+import { fdir, type Group } from "fdir";
 
 const utilsCache: Record<string, any> = {};
 
@@ -129,38 +129,28 @@ export async function constructGraphData(): Promise<{
   } else {
     console.log("start constructing graph data");
     const filePaths = getAllMarkdownFiles();
-    const batchSize = 50;
-    const batches: string[][] = [];
-
-    for (let i = 0; i < filePaths.length; i += batchSize) {
-      batches.push(filePaths.slice(i, i + batchSize));
-    }
-    console.log("Total batches: ", batches.length);
 
     const edges: GraphEdgeDataValue[] = [];
     const nodes: GraphRawNodeValue[] = [];
 
-    await Promise.all(batches.map(async (batch, index) => {
-      console.log("Batch: ", index);
-      batch?.forEach((filePath) => {
-        const aNode = {
-          title: Transformer.parseFileNameFromPath(filePath),
-          slug: toSlug(filePath),
-          shortSummary: getShortSummary(toSlug(filePath)),
-        };
-        nodes.push(aNode);
+    filePaths?.forEach((filePath) => {
+      const aNode = {
+        title: Transformer.parseFileNameFromPath(filePath),
+        slug: toSlug(filePath),
+        shortSummary: getShortSummary(toSlug(filePath)),
+      };
+      nodes.push(aNode);
 
-        const internalLinks = Transformer.getInternalLinks(filePath);
-        internalLinks.forEach((aLink) => {
-          if (aLink.slug === null || aLink.slug.length === 0) return;
-          const anEdge = {
-            source: toSlug(filePath),
-            target: aLink.slug,
-          };
-          edges.push(anEdge);
-        });
+      const internalLinks = Transformer.getInternalLinks(filePath);
+      internalLinks.forEach((aLink) => {
+        if (aLink.slug === null || aLink.slug.length === 0) return;
+        const anEdge = {
+          source: toSlug(filePath),
+          target: aLink.slug,
+        };
+        edges.push(anEdge);
       });
-    }));
+    });
 
     const data = { nodes, edges };
     fs.writeFileSync(filepath, JSON.stringify(data), "utf-8");
@@ -274,15 +264,84 @@ interface RawPostData {
   name: string;
 }
 
-interface RawDirectoryData {
+interface DirectoryTree {
   path: string;
   name: string;
-  children?: dirTree.DirectoryTree[] | undefined;
+  type: "directory" | "file";
+  children?: DirectoryTree[] | undefined;
 }
 
-export function getDirectoryData(): RawDirectoryData {
-  return dirTree(Node.getMarkdownFolder(), { extensions: /\.md/ });
+export function getDirectoryData(): DirectoryTree {
+  const rootDir = Node.getMarkdownFolder();
+  // console.time("fdir time");
+  const files = new fdir()
+    .withDirs()
+    .group()
+    .glob("./**/*.md", "./**/*.png")
+    .exclude((path) => path === ".DS_Store")
+    .crawl(rootDir)
+    .sync();
+
+  return files.sort((prev, next) => {
+    const prevDepth = prev.directory.split("/").length;
+    const nextDepth = next.directory.split("/").length;
+
+    if (prevDepth !== nextDepth) {
+      return prevDepth - nextDepth;
+    }
+
+    return prev.directory.localeCompare(next.directory);
+  }).reduce((acc, dirInfo, index) => {
+    if (index === 0) {
+      const rawDir = dirInfo.directory.slice(0, dirInfo.directory.length - 1);
+      acc["path"] = rawDir;
+      acc["name"] = rawDir.split("/").pop() ?? "";
+      acc["type"] = "directory";
+      acc["children"] = dirInfo.files.map((fileName) => ({
+        path: `${rawDir}/${fileName}`,
+        name: fileName,
+        type: "file",
+      }));
+      return acc;
+    } else {
+      return handleNestedTree(acc, dirInfo);
+    }
+  }, {} as DirectoryTree);
+  // console.timeEnd("fdir time");
+  // return directoryTree;
 }
+
+const handleNestedTree = (parent: DirectoryTree, dirInfo: Group): DirectoryTree => {
+  if (parent.type === "file") {
+    return parent;
+  }
+
+  const rawDir = dirInfo.directory.slice(0, dirInfo.directory.length - 1).split("/");
+  const dirName = rawDir.pop() ?? "";
+  const parentPath = rawDir.join("/");
+
+  if (parent.path === parentPath) {
+    const filesList = parent.children?.filter((data: any) => data.type === "file") ?? [];
+    const directories = parent.children?.filter((data: any) => data.type === "directory") ?? [];
+    const newDirectory: DirectoryTree = {
+      path: `${parentPath}/${dirName}`,
+      name: dirName,
+      type: "directory",
+      children: dirInfo.files.map((fileName: string) => ({
+        path: `${parentPath}/${dirName}/${fileName}`,
+        name: fileName,
+        type: "file",
+      })),
+    };
+    parent.children = [...directories, newDirectory, ...filesList];
+    return parent;
+  } else {
+    return {
+      ...parent,
+      children: parent.children?.map((child) => handleNestedTree(child, dirInfo)),
+    };
+  }
+};
 
 interface BasicParsedData {
   id: string;
@@ -298,7 +357,7 @@ export interface ParsedPostDirectoryData extends BasicParsedData {
 }
 
 export function convertObject(
-  directoryData: RawDirectoryData | RawPostData,
+  directoryData: DirectoryTree | RawPostData,
 ): ParsedPostData | ParsedPostDirectoryData {
   if ("children" in directoryData) {
     return parseToDirectoryData(directoryData);
@@ -307,7 +366,7 @@ export function convertObject(
   }
 }
 
-function parseToDirectoryData(rawData: RawDirectoryData): ParsedPostDirectoryData {
+function parseToDirectoryData(rawData: DirectoryTree): ParsedPostDirectoryData {
   return {
     id: rawData.name,
     name: rawData.name,
@@ -345,7 +404,7 @@ export function getFlattenArray(thisObject: ParsedPostDirectoryData): (ParsedPos
 
 export async function getPageData(postId: string = "index") {
   const { nodes, edges } = await constructGraphData();
-  const tree = getTree();
+  const tree = await getTree();
   const content = getSinglePost(postId);
   const flattenNodes = getFlattenArray(tree as ParsedPostDirectoryData);
   const listOfEdges = edges.filter(anEdge => anEdge.target === postId);
